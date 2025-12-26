@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>لعبة الإمبوستر</title>
+<style>
+body{
+  margin:0;
+  font-family:"Segoe UI",Tahoma;
+  background:linear-gradient(135deg,#4f46e5,#9333ea);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.app{
+  background:#ffffff;
+  width:92%;
+  max-width:420px;
+  border-radius:25px;
+  padding:22px;
+  box-shadow:0 20px 45px rgba(0,0,0,.3);
+  text-align:center;
+  position:relative;
+}
+
+.pageIcon{font-size:42px;margin-bottom:5px;}
+h1{color:#4f46e5;margin:5px 0;}
+h2,h3{color:#333;}
+
+.card{
+  background:#f4f4ff;
+  padding:18px;
+  border-radius:18px;
+  margin-top:15px;
+}
+
+input,select{
+  width:100%;
+  padding:13px;
+  border-radius:14px;
+  border:1px solid #ddd;
+  font-size:16px;
+  margin:10px 0;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:16px;
+  background:linear-gradient(135deg,#6366f1,#9333ea);
+  color:white;
+  font-size:18px;
+  margin-top:12px;
+  cursor:pointer;
+}
+
+.voteBtn{
+  background:#fff;
+  color:#333;
+  border:1px solid #ddd;
+  margin-bottom:8px;
+}
+
+.role{
+  font-size:20px;
+  font-weight:bold;
+  color:#4f46e5;
+}
+
+/* زر كتم الصوت */
+#muteBtn{
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: #ffd54f;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 16px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<h1>🕵️ الإمبوستر</h1>
+<button id="muteBtn" onclick="toggleSound()">🔊 الصوت شغال</button>
+
+<!-- زر تفعيل الصوت الأولي -->
+<div id="soundInit">
+  <button onclick="initSound()">ابدأ اللعبة ▶️</button>
+</div>
+
+<!-- الصفحة 1 -->
+<div id="page1" style="display:none;">
+  <div class="pageIcon">⚙️</div>
+  <h2>إعداد اللعبة</h2>
+
+  <input type="number" id="numPlayers" placeholder="عدد اللاعبين" value="4" min="2">
+  <input type="number" id="numImposters" placeholder="عدد الإمبوستر" value="1" min="1">
+
+  <select id="topicSelect">
+    <option value="food">🍔 أطعمة</option>
+    <option value="places">📍 أماكن</option>
+    <option value="tools">🛠️ أدوات</option>
+  </select>
+
+  <button onclick="goToPage2()">التالي ➡️</button>
+</div>
+
+<!-- الصفحة 2 -->
+<div id="page2" style="display:none;">
+  <div class="pageIcon">👥</div>
+  <h2>أسماء اللاعبين</h2>
+  <div id="namesForm"></div>
+  <button onclick="startGame()">ابدأ اللعبة 🎮</button>
+</div>
+
+<!-- الصفحة 3 -->
+<div id="game" style="display:none;">
+  <div class="pageIcon">🕵️‍♂️</div>
+  <h2 id="player"></h2>
+  <button onclick="showRole()">👁️ إظهار الدور</button>
+  <div class="card role" id="role"></div>
+  <button onclick="nextPlayer()">التالي ➡️</button>
+</div>
+
+<!-- صفحة التصويت -->
+<div id="vote" class="hidden">
+  <div class="pageIcon">🗳️</div>
+  <h2>مرحلة التصويت</h2>
+  <h3 id="voterName"></h3>
+  <div id="voteButtons"></div>
+</div>
+
+<!-- صفحة النتيجة -->
+<div id="result" class="hidden">
+  <h2>📊 نتيجة التصويت</h2>
+  <div id="results"></div>
+  <button onclick="showImposter()">👁️‍🗨️ إظهار الإمبوستر</button>
+  <div id="imposterResult" style="margin-top:15px;font-size:20px;color:#e11d48;"></div>
+  <button onclick="restart()" style="margin-top:12px;">🔁 إعادة اللعب</button>
+</div>
+
+<!-- الأصوات -->
+<audio id="revealSound" src="https://assets.mixkit.co/sfx/preview/mixkit-game-notification-wave-alarm-987.mp3"></audio>
+<audio id="voteSound" src="https://assets.mixkit.co/sfx/preview/mixkit-click-button-211.mp3"></audio>
+<audio id="winSound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-success-2015.mp3"></audio>
+
+</div>
+
+<script>
+let soundInitDiv = document.getElementById("soundInit");
+let page1=document.getElementById("page1");
+let page2=document.getElementById("page2");
+let game=document.getElementById("game");
+let votePage=document.getElementById("vote");
+let resultPage=document.getElementById("result");
+
+let namesForm=document.getElementById("namesForm");
+let playerElem=document.getElementById("player");
+let roleDisplay=document.getElementById("role");
+let voteButtons=document.getElementById("voteButtons");
+let resultsDiv=document.getElementById("results");
+let revealSound=document.getElementById("revealSound");
+let voteSound=document.getElementById("voteSound");
+let winSound=document.getElementById("winSound");
+
+let muteBtn=document.getElementById("muteBtn");
+
+let soundOn = true;
+
+let players=[],roles=[],imposters=[],current=0,chosenTopic="";
+let votes = {};
+let currentVoter = 0;
+let votesLeft = 0; // الأصوات المتبقية لكل لاعب
+
+let words = {
+  food: [
+    "قهوة","شاي","بيتزا","موز","تفاح","عصير","شكولاتة","كعك","بسكويت","عنب",
+    "برتقال","ليمون","خوخ","كمثرى","فراولة","كرز","أناناس","مانجو","جوافة","بطيخ",
+    "شمام","كيوي","تين","رمان","ذرة","بطاطس","بطاطا","جزر","خيار","طماطم",
+    "خس","فلفل","باذنجان","كوسة","قرنبيط","بروكلي","سبانخ","ملفوف","فول","عدس",
+    "حمص","فاصوليا","لحم","دجاج","سمك","روبيان","حليب","زبادي","جبن","زبدة",
+    "بيض","عسل","مربى","شوربة","معكرونة","أرز","خبز","بيتزا صغيرة","ساندويتش","برجر",
+    "نودلز","بيتزا عائلية","تونة","سلمون","سوشي","شوربة عدس","شوربة دجاج","بطاطس مقلية","كعك شوكولاتة","كعك فانيليا",
+    "كوكيز","بريوش","كرواسون","بان كيك","وافل","موس","جيلاتي","قهوة مثلجة","لاتيه","كابتشينو",
+    "موكا","فطائر","رغيف","كاري","بيتزا مارغريتا","برجر دجاج","برجر لحم","سلطة","فلافل","حمص بالطحينة",
+    "شيش طاووق","مشويات","بيتزا بيبروني","فطيرة التفاح","عصير برتقال طبيعي","كوكتيل فواكه","مخلل","شوربة كريمة","بيتزا خضار","عصير مانجو"
+  ],
+  places: [
+    "بحر","مدرسة","مدينة","مطار","غابة","حديقة","مستشفى","سوق","مطعم","مكتبة",
+    "متحف","مسرح","ملعب","نادي","محطة قطار","كافيه","مركز تجاري","حدود","شاطئ",
+    "مزرعة","حديقة حيوان","منتزه","فندق","جزيرة","صحراء","نهر","بحيرة","جبل","كهف",
+    "كوبري","مدرج","موقف سيارات","محطة وقود","مركز شرطة","مكتبة عامة","جامع","كنيسة","معبد","قلعة",
+    "برج","ميدان","ساحة","مبنى حكومي","مطار داخلي","مطار دولي","ميناء","مركز صحي","عيادة","ملعب كرة","ملعب تنس",
+    "صالة رياضة","مسبح","حديقة عامة","مركز شباب","مكتبة مدرسية","مكتبة جامعية","حديقة عامة","مقهى شعبي","مطعم فاخر","مطعم شعبي",
+    "سوبر ماركت","هايبر ماركت","محطة مترو","محطة ترام","محطة باص","مكتبة صغيرة","مكتبة متحف","حديقة نباتية","منتزه وطني","مزرعة تعليمية",
+    "حديقة ألعاب","مكتبة رقمية","مسجد كبير","كنيسة صغيرة","معبد بوذي","مركز تسوق صغير","نادي اجتماعي","مركز فني","صالة عرض","مركز ثقافي",
+    "مكتبة عامة صغيرة","منتزه بحري","منتزه جبلي","مطار صغير","مطار محلي","ميناء بحري","ميناء نهري","قاعة مؤتمرات","استاد","مكتبة جامعية كبيرة",
+    "مركز طبي","عيادة خاصة","مستشفى عام","مستشفى خاص","مركز تعليمي","مدرسة ابتدائية","مدرسة ثانوية","جامعة","كلية","معهد",
+    "مكتبة أطفال","مكتبة شباب","مكتبة متخصصة","صالة سينما","دار عرض","قصر ثقافة","مركز شباب المدينة","منتزه طبيعي","حديقة عامة كبيرة","مزرعة تعليمية كبرى"
+  ],
+  tools: [
+    "هاتف","حاسوب","مفتاح","مطرقة","مقص","مسطرة","قلم","دفتر","آلة حاسبة","ممحاة",
+    "لوح كتابة","مقص كهربائي","مفك","مفتاح براغي","مفتاح إنجليزي","شاكوش","منشار","كماشة","مقبض","مفتاح ربط",
+    "شريط قياس","ملقط","مفتاح صواميل","مفتاح عزم","مطرقة مطاطية","مفك كهربائي","لوحة مفاتيح","فأرة","سماعة","كاميرا",
+    "ميكروفون","مايكروفون","شاحن","كابل USB","محول كهرباء","مصباح","كشاف","مبرد","فرشاة","مقص حلاقة",
+    "مقلمة","سكاكين","مغناطيس","أدوات رسم","فرشاة رسم","ألوان","أقلام تلوين","لوحة ألوان","فرشاة مكياج","أداة قياس",
+    "آلة تصوير","كاميرا فيديو","ميكروسكوب","تلسكوب","مسبار","مطرقة خشبية","مطرقة حديدية","شاكوش صغير","كماشة صغيرة","ملقط صغير",
+    "مسطرة كهربائية","لوحة مفاتيح محمولة","حاسوب محمول","حاسوب مكتبي","لوح رسم","أداة قطع","مفك براغي صغير","مفتاح صواميل صغير","كابل شاحن","شاحن سيارة",
+    "سماعة رأس","سماعة أذن","ميكروفون محمول","كاميرا رقمية","كاميرا احترافية","مصباح يدوي","كشاف صغير","مبرد كهربائي","فرشاة دهان","مقص كهربائي صغير",
+    "مطرقة كبيرة","مطرقة صغيرة","مفك براغي كبير","مفتاح إنجليزي كبير","مفتاح ربط كبير","شاكوش كبير","كماشة كبيرة","ملقط كبير","مسطرة كبيرة","قلم كبير",
+    "دفتر كبير","آلة حاسبة كبيرة","لوح كتابة كبير","مقص كبير","مقص صغير","مفتاح صغير","لوحة مفاتيح صغيرة","فأرة صغيرة","سماعة صغيرة","كاميرا صغيرة",
+    "ميكروفون صغير","مايك صغير","شاحن صغير","كابل صغير","محول صغير","مصباح صغير","كشاف صغير","مبرد صغير","فرشاة صغيرة","مقص حلاقة صغير",
+    "مقلمة صغيرة","سكاكين صغيرة","مغناطيس صغير","أدوات رسم صغيرة","فرشاة رسم صغيرة","ألوان صغيرة","أقلام تلوين صغيرة","لوحة ألوان صغيرة","فرشاة مكياج صغيرة","أداة قياس صغيرة"
+  ]
+};
+
+// تفعيل الأصوات عند أول تفاعل
+function initSound(){
+  revealSound.play().then(()=>revealSound.pause());
+  voteSound.play().then(()=>voteSound.pause());
+  winSound.play().then(()=>winSound.pause());
+  soundInitDiv.style.display="none";
+  page1.style.display="block";
+}
+
+function toggleSound(){
+    soundOn = !soundOn;
+    revealSound.muted = !soundOn;
+    voteSound.muted = !soundOn;
+    winSound.muted = !soundOn;
+    muteBtn.innerText = soundOn ? "🔊 الصوت شغال" : "🔇 الصوت مقفول";
+}
+
+// الصفحة 1 -> 2
+function goToPage2(){
+ let n=+numPlayers.value;
+ let i=+numImposters.value;
+ chosenTopic=topicSelect.value;
+
+ if(n<2||i>=n){alert("راجع الأعداد");return;}
+
+ namesForm.innerHTML="";
+ for(let x=0;x<n;x++){
+   let inp=document.createElement("input");
+   inp.placeholder="اسم اللاعب "+(x+1);
+   namesForm.appendChild(inp);
+ }
+ page1.style.display="none";
+ page2.style.display="block";
+}
+
+// بدء اللعبة
+function startGame(){
+ players=[...namesForm.querySelectorAll("input")].map(i=>i.value.trim());
+ if(players.includes("")){alert("اكتب كل الأسماء");return;}
+
+ let word=words[chosenTopic][Math.floor(Math.random()*words[chosenTopic].length)];
+ roles=[];
+ imposters=[];
+
+ for(let i=0;i<numImposters.value;i++)roles.push("❌ أنت إمبوستر");
+ for(let i=0;i<players.length-numImposters.value;i++)roles.push("✅ الكلمة: "+word);
+ roles.sort(()=>Math.random()-0.5);
+
+ roles.forEach((r,i)=>{if(r.includes("إمبوستر"))imposters.push(players[i]);});
+
+ page2.style.display="none";
+ game.style.display="block";
+ current=0;
+ updatePlayer();
+}
+
+// عرض اللاعب الحالي
+function updatePlayer(){
+ roleDisplay.innerText="";
+ playerElem.innerText=players[current];
+}
+
+// إظهار الدور مع صوت
+function showRole(){
+ roleDisplay.innerText = roles[current];
+ if(soundOn){
+   revealSound.currentTime = 0;
+   revealSound.play();
+ }
+}
+
+// التالي -> الانتقال للتصويت
+function nextPlayer(){
+ current++;
+ if(current>=players.length){
+   game.style.display="none";
+   startVoting();
+ }else updatePlayer();
+}
+
+// بدء التصويت
+function startVoting(){
+ votes = {};
+ players.forEach(p => votes[p]=0);
+ currentVoter=0;
+ votesLeft = +numImposters.value; // الأصوات لكل لاعب = عدد الإمبوستر
+ votePage.classList.remove("hidden");
+ showVoter();
+}
+
+// عرض اللاعب الذي يصوت الآن
+function showVoter(){
+ document.getElementById("voterName").innerText = "دور التصويت: " + players[currentVoter] + " | الأصوات المتبقية: " + votesLeft;
+ voteButtons.innerHTML = ""; // مسح الأزرار القديمة
+
+ for(let i=0;i<players.length;i++){
+   let name = players[i]; // استخدم let لتثبيت الاسم
+   let btn = document.createElement("button");
+   btn.className = "voteBtn";
+   btn.innerText = "🗳️ " + name;
+   btn.onclick = function(){ castVote(name); };
+   voteButtons.appendChild(btn);
+   voteButtons.appendChild(document.createElement("br"));
+ }
+}
+
+// تسجيل التصويت
+function castVote(name){
+ if(soundOn){ voteSound.currentTime=0; voteSound.play(); }
+ votes[name]++;
+ votesLeft--; // تقليل الأصوات المتبقية
+ if(votesLeft <= 0){
+     currentVoter++;
+     if(currentVoter >= players.length){
+         showResults();
+     } else {
+         votesLeft = +numImposters.value; // إعادة تعيين الأصوات للاعب التالي
+         showVoter();
+     }
+ } else {
+     showVoter(); // تحديث الأصوات المتبقية
+ }
+}
+
+// عرض النتيجة النهائية
+function showResults(){
+ if(soundOn){ winSound.currentTime=0; winSound.play(); }
+ votePage.classList.add("hidden");
+ resultPage.classList.remove("hidden");
+ let res = "";
+ for(let p in votes){
+     res += `<p>🧑 ${p} : ${votes[p]} صوت</p>`;
+ }
+ resultsDiv.innerHTML = res;
+}
+
+// إظهار الإمبوستر بعد الضغط على الزر
+function showImposter(){
+    if(imposters.length === 1){
+        document.getElementById("imposterResult").innerText =
+            "❌ الإمبوستر هو: " + imposters[0];
+    } else {
+        document.getElementById("imposterResult").innerText =
+            "❌ الإمبوسترون هم: " + imposters.join(", ");
+    }
+}
+
+// إعادة اللعب
+function restart(){ location.reload(); }
+
+</script>
+
+</body>
+</html>
