@@ -227,12 +227,18 @@ let words = {
 
 // تفعيل الأصوات عند أول تفاعل
 function initSound(){
+  let startSound = document.getElementById("startSound");
+  startSound.currentTime = 0;
+  startSound.play();
+
   revealSound.play().then(()=>revealSound.pause());
   voteSound.play().then(()=>voteSound.pause());
   winSound.play().then(()=>winSound.pause());
+
   soundInitDiv.style.display="none";
   page1.style.display="block";
-}
+  }
+  
 
 function toggleSound(){
     soundOn = !soundOn;
@@ -378,6 +384,9 @@ function restart(){ location.reload(); }
 
  
 </script>
+  <audio id="startSound" preload="auto">
+  <source src="https://assets.mixkit.co/sfx/preview/mixkit-game-level-start-610.mp3" type="audio/mpeg">
+  </audio>
   
 </body>
 </html>
