@@ -1,10 +1,10 @@
 {
   "name": "لعبة الإمبوستر",
   "short_name": "Imposter",
-  "start_url": ".",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#4f46e5",
-  "theme_color": "#4f46e5",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "icon-192.png",
@@ -18,3 +18,4 @@
     }
   ]
 }
+
