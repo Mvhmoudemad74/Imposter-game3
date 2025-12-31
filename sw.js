@@ -1,4 +1,4 @@
-const cacheName = 'imposter-v1';
+const cacheName = 'imposter-v2';
 const assets = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
