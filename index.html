@@ -400,7 +400,9 @@ function showImposter(){
 function restart(){ location.reload(); }
 
 
- 
+if ( serviceWorker  in navigator) {
+  navigator.serviceWorker.register( sw.js );
+  }
 </script>
   <audio id="startSound" preload="auto">
   <source src="https://assets.mixkit.co/sfx/preview/mixkit-game-level-start-610.mp3" type="audio/mpeg">
