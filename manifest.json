@@ -1,7 +1,6 @@
 {
   "name": "لعبة الإمبوستر",
   "short_name": "الإمبوستر",
-  "description": "لعبة مين الجاسوس - نسخة الإمبوستر الاحترافية",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#4f46e5",
