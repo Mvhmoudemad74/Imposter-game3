@@ -126,12 +126,14 @@ body.classic{
     <option value="clothes">👕 ملابس</option>
     
   </select>
-  <select id="themeSelect">
-  <option value="default">🎮 افتراضي</option>
-  <option value="dark">🌙 دارك</option>
-  <option value="neon">⚡ نيون</option>
-  <option value="classic">📜 كلاسيك</option>
+<div class="themeSwitcher">
+  <select id="themeSelect" onchange="applyTheme()">
+    <option value="default">🎮</option>
+    <option value="dark">🌙</option>
+    <option value="neon">⚡</option>
+    <option value="classic">📜</option>
   </select>
+</div>
   
 
   <button onclick="goToPage2()">التالي ➡️</button>
