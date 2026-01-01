@@ -59,7 +59,20 @@ button{
   margin-top:12px;
   cursor:pointer;
 }
+  /* ===== THEMES ===== */
 
+body.dark{
+  background:linear-gradient(135deg,#0f172a,#020617);
+}
+
+body.neon{
+  background:linear-gradient(135deg,#00f5ff,#8b5cf6);
+}
+
+body.classic{
+  background:#f5f5f5;
+  }
+  
 .voteBtn{
   background:#fff;
   color:#333;
@@ -113,6 +126,13 @@ button{
     <option value="clothes">👕 ملابس</option>
     
   </select>
+  <select id="themeSelect">
+  <option value="default">🎮 افتراضي</option>
+  <option value="dark">🌙 دارك</option>
+  <option value="neon">⚡ نيون</option>
+  <option value="classic">📜 كلاسيك</option>
+  </select>
+  
 
   <button onclick="goToPage2()">التالي ➡️</button>
 </div>
@@ -242,6 +262,14 @@ let words = {
   ]
   
 };
+  function applyTheme(){
+  document.body.className = "";
+  let theme = themeSelect.value;
+  if(theme !== "default"){
+    document.body.classList.add(theme);
+  }
+  }
+  
 
 // تفعيل الأصوات عند أول تفاعل
 function initSound(){
@@ -268,6 +296,7 @@ function toggleSound(){
 
 // الصفحة 1 -> 2
 function goToPage2(){
+  applyTheme();
  let n=+numPlayers.value;
  let i=+numImposters.value;
  chosenTopic=topicSelect.value;
