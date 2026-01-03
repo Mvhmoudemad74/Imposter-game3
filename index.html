@@ -113,7 +113,6 @@ body.classic{
 <div class="app">
 
 <h1>🕵️ الإمبوستر</h1>
-<button id="muteBtn" onclick="toggleSound()">🔊 الصوت شغال</button>
 
 <!-- زر تفعيل الصوت الأولي -->
 <div id="soundInit">
@@ -302,7 +301,6 @@ function toggleSound(){
     revealSound.muted = !soundOn;
     voteSound.muted = !soundOn;
     winSound.muted = !soundOn;
-    muteBtn.innerText = soundOn ? "🔊 الصوت شغال" : "🔇 الصوت مقفول";
 }
 
 // الصفحة 1 -> 2
